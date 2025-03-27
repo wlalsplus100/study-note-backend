@@ -7,16 +7,19 @@ import {
   Get,
   Param,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { join } from 'path';
 import { UploadService } from './upload.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('uploads')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(@UploadedFile() file: Express.Multer.File) {

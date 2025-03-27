@@ -22,6 +22,9 @@ export class Project {
   @Prop()
   thumbnail: string;
 
+  @Prop()
+  techStack: string[];
+
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'BlogOwner',

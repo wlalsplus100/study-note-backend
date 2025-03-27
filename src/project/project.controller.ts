@@ -8,14 +8,17 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
     return this.projectService.create(createProjectDto);
@@ -34,11 +37,13 @@ export class ProjectController {
     return this.projectService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
     return this.projectService.update(id, updateProjectDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.projectService.remove(id);

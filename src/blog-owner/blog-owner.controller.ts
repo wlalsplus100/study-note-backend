@@ -7,9 +7,11 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { BlogOwnerService } from './blog-owner.service';
 import { CreateBlogOwnerDto, UpdateBlogOwnerDto } from '../dto/blog-owner.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('blog-owners')
 export class BlogOwnerController {
@@ -30,6 +32,7 @@ export class BlogOwnerController {
     return this.blogOwnerService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -38,6 +41,7 @@ export class BlogOwnerController {
     return this.blogOwnerService.update(id, updateBlogOwnerDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.blogOwnerService.remove(id);
