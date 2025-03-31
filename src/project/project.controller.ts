@@ -18,7 +18,6 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
     return this.projectService.create(createProjectDto);
@@ -37,13 +36,11 @@ export class ProjectController {
     return this.projectService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
     return this.projectService.update(id, updateProjectDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.projectService.remove(id);

@@ -32,7 +32,6 @@ export class BlogOwnerController {
     return this.blogOwnerService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -41,7 +40,6 @@ export class BlogOwnerController {
     return this.blogOwnerService.update(id, updateBlogOwnerDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.blogOwnerService.remove(id);
