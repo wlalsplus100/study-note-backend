@@ -22,7 +22,7 @@ export class CreateBlogOwnerDto {
 
   @IsString()
   @IsOptional()
-  readonly profile_image?: string;
+  readonly profileImage?: string;
 
   @IsString()
   @IsOptional()
@@ -41,15 +41,13 @@ export class UpdateBlogOwnerDto {
   @IsString()
   @IsOptional()
   @MinLength(6)
-  readonly password?: string;
+  readonly password?: string; // passwordHash 대신 password 유지
 
   @IsString()
   @IsOptional()
-  readonly profile_image?: string;
+  readonly profileImage?: string;
 
   @IsString()
   @IsOptional()
   readonly bio?: string;
-
-  readonly password_hash?: string;
 }

@@ -1,4 +1,3 @@
-// src/upload/upload.module.ts
 import { Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -10,7 +9,7 @@ import { UploadService } from './upload.service';
   imports: [
     MulterModule.register({
       storage: diskStorage({
-        destination: './uploads', // Ensure this directory exists
+        destination: './uploads',
         filename: (req, file, cb) => {
           const randomName = Array(32)
             .fill(null)
@@ -19,6 +18,15 @@ import { UploadService } from './upload.service';
           return cb(null, `${randomName}${extname(file.originalname)}`);
         },
       }),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB 제한
+      fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only JPG, PNG images are allowed'), false);
+        }
+      },
     }),
   ],
   controllers: [UploadController],

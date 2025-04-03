@@ -1,34 +1,39 @@
-// src/comment/comment.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Comment, CommentDocument } from '../schemas/comment.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Comment } from '../entities/comment.entity';
 import { CreateCommentDto, UpdateCommentDto } from '../dto/comment.dto';
+import { Post } from '../entities/post.entity';
 
 @Injectable()
 export class CommentService {
   constructor(
-    @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
+    @InjectRepository(Comment)
+    private commentRepository: Repository<Comment>,
   ) {}
 
   async create(createCommentDto: CreateCommentDto): Promise<Comment> {
-    const createdComment = new this.commentModel(createCommentDto);
-    return createdComment.save();
+    const newComment = this.commentRepository.create(createCommentDto);
+    return this.commentRepository.save(newComment);
   }
 
   async findAll(): Promise<Comment[]> {
-    return this.commentModel.find().exec();
+    return this.commentRepository.find({ relations: ['post'] });
   }
 
-  async findByPost(postId: string): Promise<Comment[]> {
-    return this.commentModel
-      .find({ post_id: postId })
-      .sort({ created_at: -1 })
-      .exec();
+  async findByPost(postId: number): Promise<Comment[]> {
+    return this.commentRepository.find({
+      where: { post: { id: postId } },
+      order: { createdAt: 'DESC' },
+      relations: ['post'],
+    });
   }
 
-  async findOne(id: string): Promise<Comment> {
-    const comment = await this.commentModel.findById(id).exec();
+  async findOne(id: number): Promise<Comment> {
+    const comment = await this.commentRepository.findOne({
+      where: { id },
+      relations: ['post'],
+    });
     if (!comment) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
@@ -36,23 +41,17 @@ export class CommentService {
   }
 
   async update(
-    id: string,
+    id: number,
     updateCommentDto: UpdateCommentDto,
   ): Promise<Comment> {
-    const updatedComment = await this.commentModel
-      .findByIdAndUpdate(id, updateCommentDto, { new: true })
-      .exec();
-
-    if (!updatedComment) {
-      throw new NotFoundException(`Comment with ID ${id} not found`);
-    }
-
-    return updatedComment;
+    const comment = await this.findOne(id);
+    Object.assign(comment, updateCommentDto);
+    return this.commentRepository.save(comment);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.commentModel.deleteOne({ _id: id }).exec();
-    if (result.deletedCount === 0) {
+  async remove(id: number): Promise<void> {
+    const result = await this.commentRepository.delete(id);
+    if (result.affected === 0) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
   }

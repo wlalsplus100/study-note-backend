@@ -28,20 +28,20 @@ export class BlogOwnerController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.blogOwnerService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @Body() updateBlogOwnerDto: UpdateBlogOwnerDto,
   ) {
     return this.blogOwnerService.update(id, updateBlogOwnerDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.blogOwnerService.remove(id);
   }
 }

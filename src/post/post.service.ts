@@ -1,73 +1,71 @@
-// src/post/post.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Post, PostDocument } from '../schemas/post.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Post } from '../entities/post.entity';
 import { CreatePostDto, UpdatePostDto } from '../dto/post.dto';
+import { BlogOwner } from '../entities/blog-owner.entity';
+import { Category } from '../entities/category.entity';
 
 @Injectable()
 export class PostService {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
+  constructor(
+    @InjectRepository(Post)
+    private postRepository: Repository<Post>,
+  ) {}
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
-    const createdPost = new this.postModel(createPostDto);
-    return createdPost.save();
+    const newPost = this.postRepository.create(createPostDto);
+    return this.postRepository.save(newPost);
   }
 
   async findAll(): Promise<Post[]> {
-    return this.postModel
-      .find()
-      .populate('owner_id', 'username profile_image')
-      .populate('category_id', 'name')
-      .exec();
+    return this.postRepository.find({
+      relations: ['owner', 'category'],
+    });
   }
 
-  async findOne(id: string): Promise<Post> {
-    const post = await this.postModel
-      .findById(id)
-      .populate('owner_id', 'username profile_image')
-      .populate('category_id', 'name')
-      .exec();
+  async findOne(id: number): Promise<Post> {
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: ['owner', 'category'],
+    });
 
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
     // 조회수 증가
-    await this.postModel.findByIdAndUpdate(id, { $inc: { view_count: 1 } });
+    await this.postRepository.increment({ id }, 'viewCount', 1);
 
     return post;
   }
-  async findByCategory(categoryId: string): Promise<Post[]> {
-    return this.postModel
-      .find({ category_id: categoryId })
-      .populate('owner_id', 'username profile_image')
-      .populate('category_id', 'name')
-      .exec();
+
+  async findByCategory(categoryId: number): Promise<Post[]> {
+    return this.postRepository.find({
+      where: { category: { id: categoryId } },
+      relations: ['owner', 'category'],
+    });
   }
 
-  async findByOwner(ownerId: string): Promise<Post[]> {
-    return this.postModel
-      .find({ owner_id: ownerId })
-      .populate('category_id', 'name')
-      .exec();
+  async findByOwner(ownerId: number): Promise<Post[]> {
+    return this.postRepository.find({
+      where: { owner: { id: ownerId } },
+      relations: ['category'],
+    });
   }
 
-  async update(id: string, updatePostDto: UpdatePostDto): Promise<Post> {
-    const updatedPost = await this.postModel
-      .findByIdAndUpdate(id, updatePostDto, { new: true })
-      .exec();
+  async update(id: number, updatePostDto: UpdatePostDto): Promise<Post> {
+    const post = await this.findOne(id);
 
-    if (!updatedPost) {
-      throw new NotFoundException(`Post with ID ${id} not found`);
-    }
+    const updatedPost = { ...post, ...updatePostDto };
+    await this.postRepository.save(updatedPost);
 
     return updatedPost;
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.postModel.deleteOne({ _id: id }).exec();
-    if (result.deletedCount === 0) {
+  async remove(id: number): Promise<void> {
+    const result = await this.postRepository.delete(id);
+    if (result.affected === 0) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
   }

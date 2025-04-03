@@ -25,8 +25,8 @@ export class PostController {
 
   @Get()
   findAll(
-    @Query('category') categoryId?: string,
-    @Query('owner') ownerId?: string,
+    @Query('category') categoryId?: number,
+    @Query('owner') ownerId?: number,
   ) {
     if (categoryId) {
       return this.postService.findByCategory(categoryId);
@@ -40,17 +40,17 @@ export class PostController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.postService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+  update(@Param('id') id: number, @Body() updatePostDto: UpdatePostDto) {
     return this.postService.update(id, updatePostDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.postService.remove(id);
   }
 }

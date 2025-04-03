@@ -1,33 +1,33 @@
 // src/blog-owner/blog-owner.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { BlogOwner, BlogOwnerDocument } from '../schemas/blog-owner.schema';
+import { BlogOwner } from '../entities/blog-owner.entity';
 import { CreateBlogOwnerDto, UpdateBlogOwnerDto } from '../dto/blog-owner.dto';
 
 @Injectable()
 export class BlogOwnerService {
   constructor(
-    @InjectModel(BlogOwner.name)
-    private blogOwnerModel: Model<BlogOwnerDocument>,
+    @InjectRepository(BlogOwner)
+    private blogOwnerRepository: Repository<BlogOwner>,
   ) {}
 
   async create(createBlogOwnerDto: CreateBlogOwnerDto): Promise<BlogOwner> {
     const hashedPassword = await bcrypt.hash(createBlogOwnerDto.password, 10);
-    const createdBlogOwner = new this.blogOwnerModel({
+    const newBlogOwner = this.blogOwnerRepository.create({
       ...createBlogOwnerDto,
-      password_hash: hashedPassword,
+      passwordHash: hashedPassword,
     });
-    return createdBlogOwner.save();
+    return this.blogOwnerRepository.save(newBlogOwner);
   }
 
   async findAll(): Promise<BlogOwner[]> {
-    return this.blogOwnerModel.find().exec();
+    return this.blogOwnerRepository.find();
   }
 
-  async findOne(id: string): Promise<BlogOwner> {
-    const owner = await this.blogOwnerModel.findById(id).exec();
+  async findOne(id: number): Promise<BlogOwner> {
+    const owner = await this.blogOwnerRepository.findOne({ where: { id } });
     if (!owner) {
       throw new NotFoundException(`Blog owner with ID ${id} not found`);
     }
@@ -35,33 +35,23 @@ export class BlogOwnerService {
   }
 
   async update(
-    id: string,
+    id: number,
     updateBlogOwnerDto: UpdateBlogOwnerDto,
   ): Promise<BlogOwner> {
-    const updateData = { ...updateBlogOwnerDto };
+    const owner = await this.findOne(id);
 
     if (updateBlogOwnerDto.password) {
-      updateData.password_hash = await bcrypt.hash(
-        updateBlogOwnerDto.password,
-        10,
-      );
-      delete updateData.password;
+      owner.passwordHash = await bcrypt.hash(updateBlogOwnerDto.password, 10);
     }
 
-    const updatedOwner = await this.blogOwnerModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .exec();
-
-    if (!updatedOwner) {
-      throw new NotFoundException(`Blog owner with ID ${id} not found`);
-    }
-
-    return updatedOwner;
+    const updatedOwner = { ...owner, ...updateBlogOwnerDto };
+    delete updatedOwner.password;
+    return this.blogOwnerRepository.save(updatedOwner);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.blogOwnerModel.deleteOne({ _id: id }).exec();
-    if (result.deletedCount === 0) {
+  async remove(id: number): Promise<void> {
+    const result = await this.blogOwnerRepository.delete(id);
+    if (result.affected === 0) {
       throw new NotFoundException(`Blog owner with ID ${id} not found`);
     }
   }

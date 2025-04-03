@@ -1,34 +1,39 @@
 // src/project/project.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Project, ProjectDocument } from '../schemas/project.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Project } from '../entities/project.entity';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 
 @Injectable()
 export class ProjectService {
   constructor(
-    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @InjectRepository(Project)
+    private projectRepository: Repository<Project>,
   ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
-    const createdProject = new this.projectModel(createProjectDto);
-    return createdProject.save();
+    const newProject = this.projectRepository.create(createProjectDto);
+    return this.projectRepository.save(newProject);
   }
 
   async findAll(): Promise<Project[]> {
-    return this.projectModel.find().exec();
+    return this.projectRepository.find({ relations: ['owner'] });
   }
 
-  async findByOwner(ownerId: string): Promise<Project[]> {
-    return this.projectModel.find({ owner_id: ownerId }).exec();
+  async findByOwner(ownerId: number): Promise<Project[]> {
+    return this.projectRepository.find({
+      where: { owner: { id: ownerId } },
+      relations: ['owner'],
+    });
   }
 
-  async findOne(id: string): Promise<Project> {
-    const project = await this.projectModel
-      .findById(id)
-      .populate('owner_id', 'username profile_image')
-      .exec();
+  async findOne(id: number): Promise<Project> {
+    const project = await this.projectRepository.findOne({
+      where: { id },
+      relations: ['owner'],
+    });
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
@@ -36,23 +41,17 @@ export class ProjectService {
   }
 
   async update(
-    id: string,
+    id: number,
     updateProjectDto: UpdateProjectDto,
   ): Promise<Project> {
-    const updatedProject = await this.projectModel
-      .findByIdAndUpdate(id, updateProjectDto, { new: true })
-      .exec();
-
-    if (!updatedProject) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
-    }
-
-    return updatedProject;
+    await this.findOne(id);
+    await this.projectRepository.update(id, updateProjectDto);
+    return this.findOne(id);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.projectModel.deleteOne({ _id: id }).exec();
-    if (result.deletedCount === 0) {
+  async remove(id: number): Promise<void> {
+    const result = await this.projectRepository.delete(id);
+    if (result.affected === 0) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
   }

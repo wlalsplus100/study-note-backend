@@ -1,16 +1,11 @@
-// src/blog-owner/blog-owner.module.ts
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlogOwnerController } from './blog-owner.controller';
 import { BlogOwnerService } from './blog-owner.service';
-import { BlogOwner, BlogOwnerSchema } from '../schemas/blog-owner.schema';
+import { BlogOwner } from '../entities/blog-owner.entity';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: BlogOwner.name, schema: BlogOwnerSchema },
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([BlogOwner])],
   controllers: [BlogOwnerController],
   providers: [BlogOwnerService],
   exports: [BlogOwnerService],

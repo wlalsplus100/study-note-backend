@@ -24,7 +24,7 @@ export class ProjectController {
   }
 
   @Get()
-  findAll(@Query('owner') ownerId?: string) {
+  findAll(@Query('owner') ownerId?: number) {
     if (ownerId) {
       return this.projectService.findByOwner(ownerId);
     }
@@ -32,17 +32,17 @@ export class ProjectController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.projectService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
+  update(@Param('id') id: number, @Body() updateProjectDto: UpdateProjectDto) {
     return this.projectService.update(id, updateProjectDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.projectService.remove(id);
   }
 }

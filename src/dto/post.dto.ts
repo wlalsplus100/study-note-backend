@@ -2,7 +2,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsMongoId,
+  IsInt,
   IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -14,28 +14,28 @@ export class CreatePostDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly content_markdown: string;
+  readonly contentMarkdown: string;
 
   @IsString()
   @IsOptional()
-  readonly content_html?: string;
+  readonly contentHtml?: string;
 
   @IsString()
   @IsOptional()
-  readonly featured_image?: string;
+  readonly featuredImage?: string;
 
-  @IsMongoId()
+  @IsInt()
   @IsNotEmpty()
-  readonly owner_id: string;
+  readonly ownerId: number; // ✅ 카멜 케이스로 수정 (TypeORM에서 더 자연스러움)
 
-  @IsMongoId()
+  @IsInt()
   @IsNotEmpty()
-  readonly category_id: string;
+  readonly categoryId: number; // ✅ 카멜 케이스 적용
 
   @IsDate()
   @IsOptional()
   @Type(() => Date)
-  readonly published_at?: Date;
+  readonly publishedAt?: Date; // ✅ 카멜 케이스 적용
 }
 
 export class UpdatePostDto {
@@ -45,22 +45,22 @@ export class UpdatePostDto {
 
   @IsString()
   @IsOptional()
-  readonly content_markdown?: string;
+  readonly contentMarkdown?: string; // ✅ 카멜 케이스 적용
 
   @IsString()
   @IsOptional()
-  readonly content_html?: string;
+  readonly contentHtml?: string;
 
   @IsString()
   @IsOptional()
-  readonly featured_image?: string;
+  readonly featuredImage?: string;
 
-  @IsMongoId()
+  @IsInt()
   @IsOptional()
-  readonly category_id?: string;
+  readonly categoryId?: number; // ✅ 카멜 케이스 적용
 
   @IsDate()
   @IsOptional()
   @Type(() => Date)
-  readonly published_at?: Date;
+  readonly publishedAt?: Date; // ✅ 카멜 케이스 적용
 }
