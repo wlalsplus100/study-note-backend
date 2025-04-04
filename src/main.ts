@@ -16,7 +16,7 @@ async function bootstrap() {
 
   // 정적 파일 제공
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
+    prefix: '/api/uploads',
   });
 
   // 유효성 검사 파이프

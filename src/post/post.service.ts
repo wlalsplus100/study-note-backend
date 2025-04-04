@@ -11,11 +11,36 @@ export class PostService {
   constructor(
     @InjectRepository(Post)
     private postRepository: Repository<Post>,
+    @InjectRepository(BlogOwner)
+    private blogOwnerRepository: Repository<BlogOwner>,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
   ) {}
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
-    const newPost = this.postRepository.create(createPostDto);
-    return this.postRepository.save(newPost);
+    const { ownerId, categoryId, ...postData } = createPostDto;
+
+    const owner = await this.blogOwnerRepository.findOne({
+      where: { id: ownerId },
+    });
+    if (!owner) {
+      throw new NotFoundException(`Owner with ID ${ownerId} not found`);
+    }
+
+    const category = await this.categoryRepository.findOne({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${categoryId} not found`);
+    }
+
+    const post = this.postRepository.create({
+      ...postData,
+      owner,
+      category,
+    });
+
+    return this.postRepository.save(post);
   }
 
   async findAll(): Promise<Post[]> {
@@ -29,14 +54,9 @@ export class PostService {
       where: { id },
       relations: ['owner', 'category'],
     });
-
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
-
-    // 조회수 증가
-    await this.postRepository.increment({ id }, 'viewCount', 1);
-
     return post;
   }
 
@@ -50,17 +70,14 @@ export class PostService {
   async findByOwner(ownerId: number): Promise<Post[]> {
     return this.postRepository.find({
       where: { owner: { id: ownerId } },
-      relations: ['category'],
+      relations: ['owner', 'category'],
     });
   }
 
   async update(id: number, updatePostDto: UpdatePostDto): Promise<Post> {
     const post = await this.findOne(id);
-
-    const updatedPost = { ...post, ...updatePostDto };
-    await this.postRepository.save(updatedPost);
-
-    return updatedPost;
+    const updatedPost = this.postRepository.merge(post, updatePostDto);
+    return this.postRepository.save(updatedPost);
   }
 
   async remove(id: number): Promise<void> {

@@ -1,34 +1,39 @@
 // src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { BlogOwner, BlogOwnerDocument } from '../schemas/blog-owner.schema';
+import { BlogOwner } from '../entities/blog-owner.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(BlogOwner.name)
-    private blogOwnerModel: Model<BlogOwnerDocument>,
+    @InjectRepository(BlogOwner)
+    private blogOwnerRepository: Repository<BlogOwner>,
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.blogOwnerModel.findOne({ email }).exec();
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
-      const { password_hash, ...result } = user.toObject();
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<Omit<BlogOwner, 'passwordHash'> | null> {
+    const user = await this.blogOwnerRepository.findOne({ where: { email } });
+    if (user && (await bcrypt.compare(password, user.passwordHash))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash: _, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async login(user: any) {
-    const payload = { email: user.email, sub: user._id };
+  async login(user: Omit<BlogOwner, 'passwordHash'>) {
+    const payload = { email: user.email, sub: user.id };
+    const access_token = await this.jwtService.signAsync(payload);
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
       user: {
-        id: user._id,
+        id: user.id,
         username: user.username,
         email: user.email,
       },

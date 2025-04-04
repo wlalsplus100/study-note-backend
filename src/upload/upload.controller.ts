@@ -23,6 +23,7 @@ export class UploadController {
 
   constructor(private readonly uploadService: UploadService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
@@ -57,8 +58,12 @@ export class UploadController {
         originalname: file.originalname,
         url: this.uploadService.getFileUrl(filename),
       };
-    } catch (error) {
-      this.logger.error(`File upload error: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(`File upload error: ${error.message}`);
+      } else {
+        this.logger.error('File upload error: Unknown error occurred');
+      }
       throw new BadRequestException('File upload failed');
     }
   }

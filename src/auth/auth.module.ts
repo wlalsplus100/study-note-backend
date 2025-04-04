@@ -1,25 +1,24 @@
 // src/auth/auth.module.ts
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { MongooseModule } from '@nestjs/mongoose';
+import { PassportModule } from '@nestjs/passport';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { BlogOwner, BlogOwnerSchema } from '../schemas/blog-owner.schema';
-import { BlogOwnerModule } from '../blog-owner/blog-owner.module';
+import { JwtStrategy } from './jwt.strategy';
+import { BlogOwner } from '../entities/blog-owner.entity';
 
 @Module({
   imports: [
-    BlogOwnerModule,
-    MongooseModule.forFeature([
-      { name: BlogOwner.name, schema: BlogOwnerSchema },
-    ]),
+    TypeOrmModule.forFeature([BlogOwner]),
+    PassportModule,
     JwtModule.register({
-      secret: 'YOUR_SECRET_KEY', // 실제 환경에서는 환경 변수를 사용하세요
-      signOptions: { expiresIn: '1d' },
+      secret: process.env.JWT_SECRET || 'your_jwt_secret_key',
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION || '1d' },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
