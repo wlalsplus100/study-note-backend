@@ -10,10 +10,15 @@ export class CommentService {
   constructor(
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
+    @InjectRepository(Post)
+    private postRepository: Repository<Post>,
   ) {}
 
   async create(createCommentDto: CreateCommentDto): Promise<Comment> {
-    const newComment = this.commentRepository.create(createCommentDto);
+    const { postId, ...rest } = createCommentDto;
+    const post = await this.postRepository.findOne({ where: { id: postId } });
+    if (!post) throw new NotFoundException('해당 게시글이 존재하지 않습니다.');
+    const newComment = this.commentRepository.create({ ...rest, post });
     return this.commentRepository.save(newComment);
   }
 
